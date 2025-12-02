@@ -1,0 +1,311 @@
+================================================================================
+    POWER BI COPILOT PROMPTS - INSTITUTIONAL ADVANCEMENT DASHBOARD
+================================================================================
+
+Copy and paste each section prompt into Power BI Copilot to build your dashboard.
+
+================================================================================
+                         GLOBAL SLICERS (All Pages)
+================================================================================
+
+Add these slicers to each page for consistent filtering:
+
+SLICER 1: Year
+- Field: GIFT_TRAN[GIFT_DTE] (extract Year)
+- Type: Dropdown or List
+- Purpose: Filter by calendar year
+
+SLICER 2: Campaign
+- Field: CAMPAIGN[CAMPAIGN_DESC]
+- Type: Dropdown
+- Purpose: Filter by campaign
+
+SLICER 3: Fund/Designation
+- Field: GIFT_CATEGORY[GIFT_CAT_DESC]
+- Type: Dropdown
+- Purpose: Filter by fund
+
+SLICER 4: Gift Type
+- Field: GIFT_TRAN[GIFT_CLASS]
+- Type: List (C=Cash, P=Pledge, M=Match, S=Soft Credit, N=Non-Cash)
+- Purpose: Filter by gift classification
+
+
+================================================================================
+                    PAGE 1: EXECUTIVE SUMMARY
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create an Executive Summary page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown
+3. Fund slicer using GIFT_CATEGORY[GIFT_CAT_DESC] as a dropdown
+
+KPI CARDS (row across top):
+1. Card showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] with title "Total Gifts"
+2. Card showing DISTINCTCOUNT of GIFT_TRAN[DONOR_ID] with title "Total Donors"
+3. Card showing AVERAGE of GIFT_TRAN[GIFT_TRAN_AMT] with title "Average Gift"
+4. Card showing COUNT of GIFT_TRAN[GIFT_TRAN_AMT] with title "Gift Count"
+
+VISUALS:
+1. Clustered bar chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by YEAR(GIFT_TRAN[GIFT_DTE])
+2. Donut chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_TRAN[GIFT_CLASS]
+3. Gauge chart comparing SUM of CAMPAIGN[CAMPAN_AMT_ACTUAL] to SUM of CAMPAIGN[CAMPAN_AMT_GOAL]
+4. Table showing top 10 donors: NAME_MASTER[LAST_NAME], NAME_MASTER[FIRST_NAME], SUM of GIFT_TRAN[GIFT_TRAN_AMT], sorted descending
+
+
+================================================================================
+                    PAGE 2: GIVING TRENDS
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create a Giving Trends page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown
+3. Gift Class slicer using GIFT_TRAN[GIFT_CLASS] as a list
+
+VISUALS:
+1. Line chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_TRAN[GIFT_DTE] grouped by Month
+   - Title: "Monthly Giving Trend"
+
+2. Clustered column chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by YEAR(GIFT_TRAN[GIFT_DTE])
+   - Title: "Annual Giving Comparison"
+
+3. Line chart showing COUNT of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_TRAN[GIFT_DTE] grouped by Month
+   - Title: "Monthly Gift Count Trend"
+
+4. Matrix showing:
+   - Rows: YEAR(GIFT_TRAN[GIFT_DTE])
+   - Columns: MONTH(GIFT_TRAN[GIFT_DTE])
+   - Values: SUM of GIFT_TRAN[GIFT_TRAN_AMT]
+   - Title: "Giving by Year and Month"
+
+5. Area chart showing cumulative SUM of GIFT_TRAN[GIFT_TRAN_AMT] over GIFT_TRAN[GIFT_DTE]
+   - Title: "Cumulative Giving Over Time"
+
+
+================================================================================
+                    PAGE 3: DONOR ANALYSIS
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create a Donor Analysis page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Fund slicer using GIFT_CATEGORY[GIFT_CAT_DESC] as a dropdown
+3. Consecutive Years slicer using DONOR_MASTER[YRS_CONT_GIVING] as a numeric range
+
+KPI CARDS (row across top):
+1. Card showing DISTINCTCOUNT of GIFT_TRAN[DONOR_ID] with title "Total Donors"
+2. Card showing AVERAGE of DONOR_MASTER[AVG_GIFT_SIZE] with title "Avg Gift Size"
+3. Card showing AVERAGE of DONOR_MASTER[YRS_CONT_GIVING] with title "Avg Years Giving"
+4. Card showing MAX of DONOR_MASTER[GIFTS_AMT] with title "Top Donor Lifetime"
+
+VISUALS:
+1. Clustered bar chart showing DISTINCTCOUNT of GIFT_TRAN[DONOR_ID] by YEAR(GIFT_TRAN[GIFT_DTE])
+   - Title: "Donors by Year"
+
+2. Table showing top 25 donors:
+   - NAME_MASTER[LAST_NAME]
+   - NAME_MASTER[FIRST_NAME]
+   - DONOR_MASTER[GIFTS_AMT] (lifetime total)
+   - DONOR_MASTER[GIFTS_NUM] (gift count)
+   - DONOR_MASTER[FIRST_GIFT_DTE]
+   - DONOR_MASTER[LAST_GIFT_DTE]
+   - DONOR_MASTER[YRS_CONT_GIVING]
+   - Sorted by DONOR_MASTER[GIFTS_AMT] descending
+   - Title: "Top Donors"
+
+3. Histogram or column chart showing COUNT of DONOR_MASTER[ID_NUM] by DONOR_MASTER[YRS_CONT_GIVING]
+   - Title: "Donors by Years of Consecutive Giving"
+
+4. Scatter plot:
+   - X-axis: DONOR_MASTER[GIFTS_NUM]
+   - Y-axis: DONOR_MASTER[GIFTS_AMT]
+   - Title: "Gift Count vs Total Giving"
+
+
+================================================================================
+                    PAGE 4: CAMPAIGN PERFORMANCE
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create a Campaign Performance page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown (multi-select)
+
+KPI CARDS (row across top):
+1. Card showing SUM of CAMPAIGN[CAMPAN_AMT_GOAL] with title "Total Goal"
+2. Card showing SUM of CAMPAIGN[CAMPAN_AMT_ACTUAL] with title "Total Raised"
+3. Card showing COUNT of CAMPAIGN[CAMPAIGN_CDE] with title "Campaign Count"
+
+VISUALS:
+1. Clustered bar chart:
+   - Y-axis: CAMPAIGN[CAMPAIGN_DESC]
+   - X-axis values: SUM of CAMPAIGN[CAMPAN_AMT_GOAL] and SUM of CAMPAIGN[CAMPAN_AMT_ACTUAL]
+   - Title: "Campaign Goal vs Actual"
+   - Sort by CAMPAIGN[CAMPAN_AMT_ACTUAL] descending
+
+2. Gauge chart for each major campaign:
+   - Value: SUM of CAMPAIGN[CAMPAN_AMT_ACTUAL]
+   - Target: SUM of CAMPAIGN[CAMPAN_AMT_GOAL]
+   - Title: "Goal Achievement"
+
+3. Table showing all campaigns:
+   - CAMPAIGN[CAMPAIGN_CDE]
+   - CAMPAIGN[CAMPAIGN_DESC]
+   - CAMPAIGN[CAMPAN_AMT_GOAL]
+   - CAMPAIGN[CAMPAN_AMT_ACTUAL]
+   - CAMPAIGN[CAMP_START_DATE]
+   - CAMPAIGN[CAMP_END_DATE]
+   - CAMPAIGN[GIFTS_NUM]
+   - Calculated: Achievement % = CAMPAN_AMT_ACTUAL / CAMPAN_AMT_GOAL
+   - Title: "Campaign Details"
+
+4. Treemap showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by CAMPAIGN[CAMPAIGN_DESC]
+   - Title: "Giving Distribution by Campaign"
+
+
+================================================================================
+                    PAGE 5: FUND & DESIGNATION ANALYSIS
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create a Fund and Designation Analysis page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Fund Type slicer using GIFT_CATEGORY[FUND_TYPE] as a list
+   (R=Restricted, U=Unrestricted, E=Endowed, A=Annual)
+3. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown
+
+VISUALS:
+1. Donut chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_CATEGORY[FUND_TYPE]
+   - Title: "Giving by Fund Type"
+
+2. Horizontal bar chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_CATEGORY[GIFT_CAT_DESC]
+   - Title: "Top Funds by Total Giving"
+   - Sort descending, show top 15
+
+3. Table showing fund details:
+   - GIFT_CATEGORY[CAT_COMP_1]
+   - GIFT_CATEGORY[GIFT_CAT_DESC]
+   - GIFT_CATEGORY[FUND_TYPE]
+   - GIFT_CATEGORY[FUND_GOAL_AMT]
+   - SUM of GIFT_TRAN[GIFT_TRAN_AMT] as "Total Raised"
+   - COUNT of GIFT_TRAN[DONOR_ID] as "Gift Count"
+   - Title: "Fund Details"
+
+4. Clustered column chart:
+   - X-axis: YEAR(GIFT_TRAN[GIFT_DTE])
+   - Y-axis: SUM of GIFT_TRAN[GIFT_TRAN_AMT]
+   - Legend: GIFT_CATEGORY[FUND_TYPE]
+   - Title: "Fund Type Trends by Year"
+
+5. Treemap showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_CATEGORY[GIFT_CAT_DESC]
+   - Title: "Fund Distribution"
+
+
+================================================================================
+                    PAGE 6: ALUMNI GIVING
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create an Alumni Giving page with the following:
+
+SLICERS (place at top of page):
+1. Year slicer using GIFT_TRAN[GIFT_DTE] as a dropdown
+2. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown
+3. Fund slicer using GIFT_CATEGORY[GIFT_CAT_DESC] as a dropdown
+
+KPI CARDS (row across top):
+1. Card showing COUNT of ALUMNI_MASTER[ID_NUM] with title "Total Alumni Donors"
+2. Card showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] filtered to alumni with title "Alumni Giving Total"
+
+VISUALS:
+1. Clustered bar chart showing COUNT of ALUMNI_MASTER[ID_NUM] by YEAR(GIFT_TRAN[GIFT_DTE])
+   - Title: "Alumni Donors by Year"
+
+2. Table showing alumni donors:
+   - NAME_MASTER[LAST_NAME]
+   - NAME_MASTER[FIRST_NAME]
+   - DONOR_MASTER[GIFTS_AMT]
+   - DONOR_MASTER[FIRST_GIFT_DTE]
+   - DONOR_MASTER[LAST_GIFT_DTE]
+   - Filter: Only show records where ALUMNI_MASTER[ID_NUM] exists
+   - Title: "Alumni Donor List"
+
+3. Line chart showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] by GIFT_TRAN[GIFT_DTE] grouped by Year
+   - Filter to alumni only
+   - Title: "Alumni Giving Trend"
+
+
+================================================================================
+                    PAGE 7: GIFT DETAILS (Drill-Down)
+================================================================================
+
+COPILOT PROMPT:
+---------------
+Create a Gift Details page with the following:
+
+SLICERS (place at top and side of page):
+1. Date range slicer using GIFT_TRAN[GIFT_DTE] as a date range (Between)
+2. Campaign slicer using CAMPAIGN[CAMPAIGN_DESC] as a dropdown
+3. Fund slicer using GIFT_CATEGORY[GIFT_CAT_DESC] as a dropdown
+4. Gift Class slicer using GIFT_TRAN[GIFT_CLASS] as a list
+5. Donor search slicer using NAME_MASTER[LAST_NAME] as a searchable dropdown
+
+VISUALS:
+1. Detailed table showing all gift transactions:
+   - GIFT_TRAN[GIFT_DTE]
+   - NAME_MASTER[LAST_NAME]
+   - NAME_MASTER[FIRST_NAME]
+   - GIFT_TRAN[GIFT_TRAN_AMT]
+   - CAMPAIGN[CAMPAIGN_DESC]
+   - GIFT_CATEGORY[GIFT_CAT_DESC]
+   - GIFT_TRAN[GIFT_CLASS]
+   - GIFT_TRAN[SOFT_CREDIT_YN]
+   - Title: "Gift Transaction Details"
+   - Enable drill-through from other pages
+
+KPI CARDS (above table):
+1. Card showing SUM of GIFT_TRAN[GIFT_TRAN_AMT] with title "Filtered Total"
+2. Card showing COUNT of GIFT_TRAN[GIFT_TRAN_AMT] with title "Transaction Count"
+3. Card showing DISTINCTCOUNT of GIFT_TRAN[DONOR_ID] with title "Unique Donors"
+
+
+================================================================================
+                         SLICER REFERENCE SUMMARY
+================================================================================
+
++---------------------+--------------------------------+------------------+
+| Slicer Name         | Field                          | Table            |
++---------------------+--------------------------------+------------------+
+| Year                | GIFT_DTE (Year)                | GIFT_TRAN        |
+| Date Range          | GIFT_DTE                       | GIFT_TRAN        |
+| Campaign            | CAMPAIGN_DESC                  | CAMPAIGN         |
+| Fund/Designation    | GIFT_CAT_DESC                  | GIFT_CATEGORY    |
+| Fund Type           | FUND_TYPE                      | GIFT_CATEGORY    |
+| Gift Class          | GIFT_CLASS                     | GIFT_TRAN        |
+| Donor Name          | LAST_NAME                      | NAME_MASTER      |
+| Years Giving        | YRS_CONT_GIVING                | DONOR_MASTER     |
+| Solicitation Type   | DESCRIPTION                    | SOLICIT_DEF      |
++---------------------+--------------------------------+------------------+
+
+
+================================================================================
+                              END OF PROMPTS
+================================================================================

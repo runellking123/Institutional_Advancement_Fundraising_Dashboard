@@ -1,0 +1,330 @@
+================================================================================
+       INSTITUTIONAL ADVANCEMENT DASHBOARD - DATA DICTIONARY & RELATIONSHIPS
+================================================================================
+Generated: December 1, 2025
+Data Range: 2020-2025
+
+================================================================================
+                              TABLE OF CONTENTS
+================================================================================
+1. Data Model Overview
+2. Table Relationships
+3. GIFT_TRAN (Fact Table)
+4. DONOR_MASTER (Dimension)
+5. NAME_MASTER (Dimension)
+6. CAMPAIGN (Dimension)
+7. GIFT_CATEGORY (Dimension)
+8. Recommended Measures for Power BI
+
+================================================================================
+                           1. DATA MODEL OVERVIEW
+================================================================================
+
+CORE TABLES:
++------------------+----------+------------------------------------------+
+| Table            | Records  | Purpose                                  |
++------------------+----------+------------------------------------------+
+| GIFT_TRAN        | 8,385    | Primary fact table - all transactions    |
+| DONOR_MASTER     | 2,448    | Donor profiles and lifetime metrics      |
+| NAME_MASTER      | 2,448    | Donor names                              |
+| CAMPAIGN         | 368      | Campaign definitions and goals           |
+| GIFT_CATEGORY    | 569      | Fund/designation definitions             |
++------------------+----------+------------------------------------------+
+
+================================================================================
+                          2. TABLE RELATIONSHIPS
+================================================================================
+
+PRIMARY RELATIONSHIPS (Create these in Power BI):
+
+1. GIFT_TRAN to DONOR_MASTER
+   - GIFT_TRAN.DONOR_ID  -->  DONOR_MASTER.ID_NUM
+   - Cardinality: Many-to-One
+   - Cross-filter: Both directions
+
+2. DONOR_MASTER to NAME_MASTER
+   - DONOR_MASTER.ID_NUM  -->  NAME_MASTER.ID_NUM
+   - Cardinality: One-to-One
+   - Cross-filter: Both directions
+
+3. GIFT_TRAN to CAMPAIGN
+   - GIFT_TRAN.CAMPAIGN_CDE  -->  CAMPAIGN.CAMPAIGN_CDE
+   - Cardinality: Many-to-One
+   - Cross-filter: Single direction
+
+4. GIFT_TRAN to GIFT_CATEGORY
+   - GIFT_TRAN.CAT_COMP_1  -->  GIFT_CATEGORY.CAT_COMP_1
+   - Cardinality: Many-to-One
+   - Cross-filter: Single direction
+
+
+VISUAL DIAGRAM:
+
+                    +----------------+
+                    |    CAMPAIGN    |
+                    | CAMPAIGN_CDE   |
+                    +-------+--------+
+                            |
+                            | (Many-to-One)
+                            |
++----------------+  +-------+--------+  +----------------+
+| GIFT_CATEGORY  |  |   GIFT_TRAN    |  |  DONOR_MASTER  |
+| CAT_COMP_1     +--+ (FACT TABLE)   +--+    ID_NUM      |
++----------------+  |                |  +-------+--------+
+                    | DONOR_ID       |          |
+                    | CAMPAIGN_CDE   |          | (One-to-One)
+                    | CAT_COMP_1     |          |
+                    | GIFT_DTE       |  +-------+--------+
+                    | GIFT_TRAN_AMT  |  |  NAME_MASTER   |
+                    +----------------+  |    ID_NUM      |
+                                        +----------------+
+
+================================================================================
+                      3. GIFT_TRAN (Fact Table) - 8,385 Records
+================================================================================
+
+PRIMARY KEY: GIFT_GROUP_NUM + GIFT_NUM + GIFT_TRAN_NUM
+
+KEY FIELDS FOR ANALYSIS:
++------------------+----------+------------------------------------------------+
+| Column           | Type     | Description                                    |
++------------------+----------+------------------------------------------------+
+| GIFT_GROUP_NUM   | numeric  | Gift group identifier                          |
+| GIFT_NUM         | int      | Gift number within group                       |
+| GIFT_TRAN_NUM    | numeric  | Transaction number within gift                 |
+| DONOR_ID         | int      | FK to DONOR_MASTER.ID_NUM                      |
+| GIFT_DTE         | datetime | Date of gift (USE FOR TIME ANALYSIS)           |
+| GIFT_TRAN_AMT    | numeric  | Transaction amount (PRIMARY AMOUNT FIELD)      |
+| CAMPAIGN_CDE     | char     | FK to CAMPAIGN.CAMPAIGN_CDE                    |
+| CAT_COMP_1       | char     | FK to GIFT_CATEGORY.CAT_COMP_1 (Fund code)     |
+| CAT_COMP_2       | char     | Secondary category code                        |
+| SOLICIT_CDE      | char     | FK to SOLICIT_DEF.SOLICIT_CDE                  |
+| GIFT_CLASS       | char     | Gift classification code                       |
+| GIFT_TRAN_STS    | char     | Transaction status                             |
+| SOFT_CREDIT_YN   | char     | Soft credit indicator (Y/N)                    |
+| CHARITABLE_YN    | char     | Tax-deductible indicator (Y/N)                 |
+| GIVING_RELATION  | char     | Giving relationship code                       |
+| MATCH_CO_ID      | int      | Matching company ID (if matched gift)          |
++------------------+----------+------------------------------------------------+
+
+GIFT_CLASS VALUES:
+- C = Cash Gift
+- P = Pledge/Promise
+- M = Matching Gift
+- S = Soft Credit
+- N = Non-Cash Gift
+
+GIFT_TRAN_STS VALUES:
+- A = Active
+- V = Voided
+- T = Transferred
+
+================================================================================
+                    4. DONOR_MASTER (Dimension) - 2,448 Records
+================================================================================
+
+PRIMARY KEY: ID_NUM
+
+KEY FIELDS FOR ANALYSIS:
++--------------------+----------+----------------------------------------------+
+| Column             | Type     | Description                                  |
++--------------------+----------+----------------------------------------------+
+| ID_NUM             | int      | Unique donor identifier (PK)                 |
+| YRS_CONT_GIVING    | int      | Years of continuous giving                   |
+| NUM_GIVING_YRS     | int      | Total number of years given                  |
+| AVG_GIFT_SIZE      | numeric  | Average gift amount                          |
+| FIRST_GIFT_DTE     | datetime | Date of first gift ever                      |
+| FIRST_GIFT_AMT     | numeric  | Amount of first gift                         |
+| LAST_GIFT_DTE      | datetime | Date of most recent gift                     |
+| LAST_GIFT_AMT      | numeric  | Amount of most recent gift                   |
+| LARGEST_GIFT_DTE   | datetime | Date of largest gift                         |
+| LARGEST_GIFT_AMT   | numeric  | Amount of largest gift                       |
+| GIFTS_NUM          | int      | Total number of gifts (lifetime)             |
+| GIFTS_AMT          | numeric  | Total gift amount (lifetime)                 |
+| CASH_GIFT_NUM      | int      | Number of cash gifts                         |
+| CASH_GIFT_AMT      | numeric  | Total cash gift amount                       |
+| PROMISE_NUM        | int      | Number of pledges                            |
+| PROMISE_AMT        | numeric  | Total pledge amount                          |
+| PROMISE_PMT_NUM    | int      | Number of pledge payments                    |
+| PROMISE_PMT_AMT    | numeric  | Total pledge payment amount                  |
+| ANON_DONOR_FLAG    | char     | Anonymous donor indicator (Y/N)              |
+| ACTIVE_FLAG        | char     | Active donor indicator                       |
+| STOP_MAIL_FLAG     | char     | Do not mail indicator                        |
++--------------------+----------+----------------------------------------------+
+
+================================================================================
+                     5. NAME_MASTER (Dimension) - 2,448 Records
+================================================================================
+
+PRIMARY KEY: ID_NUM
+
+KEY FIELDS:
++------------------+----------+------------------------------------------------+
+| Column           | Type     | Description                                    |
++------------------+----------+------------------------------------------------+
+| ID_NUM           | int      | Unique identifier (PK, FK to DONOR_MASTER)     |
+| LAST_NAME        | char     | Last name                                      |
+| FIRST_NAME       | char     | First name                                     |
+| MIDDLE_NAME      | char     | Middle name                                    |
+| PREFIX           | char     | Name prefix (Mr., Mrs., Dr., etc.)             |
+| SUFFIX           | char     | Name suffix (Jr., III, etc.)                   |
++------------------+----------+------------------------------------------------+
+
+CALCULATED COLUMN SUGGESTION:
+- Full_Name = [FIRST_NAME] & " " & [LAST_NAME]
+
+================================================================================
+                      6. CAMPAIGN (Dimension) - 368 Records
+================================================================================
+
+PRIMARY KEY: CAMPAIGN_CDE
+
+KEY FIELDS FOR ANALYSIS:
++--------------------+----------+----------------------------------------------+
+| Column             | Type     | Description                                  |
++--------------------+----------+----------------------------------------------+
+| CAMPAIGN_CDE       | char     | Campaign code (PK)                           |
+| CAMPAIGN_DESC      | char     | Campaign description/name                    |
+| CAMPAN_AMT_GOAL    | numeric  | Campaign fundraising goal                    |
+| CAMPAN_AMT_ACTUAL  | numeric  | Actual amount raised                         |
+| CAMP_START_DATE    | datetime | Campaign start date                          |
+| CAMP_END_DATE      | datetime | Campaign end date                            |
+| GIFTS_NUM          | int      | Total number of gifts                        |
+| GIFTS_AMT          | numeric  | Total amount raised                          |
+| CASH_GIFT_NUM      | int      | Number of cash gifts                         |
+| CASH_GIFT_AMT      | numeric  | Total cash gifts                             |
+| PROMISE_NUM        | int      | Number of pledges                            |
+| PROMISE_AMT        | numeric  | Total pledge amount                          |
+| EXPENSES_BUDGET    | numeric  | Budgeted expenses                            |
+| EXPENSES_ACTUAL    | numeric  | Actual expenses                              |
++--------------------+----------+----------------------------------------------+
+
+CALCULATED COLUMN SUGGESTIONS:
+- Goal_Pct_Achieved = [CAMPAN_AMT_ACTUAL] / [CAMPAN_AMT_GOAL]
+- Campaign_Status = IF([CAMP_END_DATE] < TODAY(), "Closed", "Active")
+
+================================================================================
+                   7. GIFT_CATEGORY (Dimension) - 569 Records
+================================================================================
+
+PRIMARY KEY: CAT_COMP_1 + CAT_COMP_2
+
+KEY FIELDS FOR ANALYSIS:
++--------------------+----------+----------------------------------------------+
+| Column             | Type     | Description                                  |
++--------------------+----------+----------------------------------------------+
+| CAT_COMP_1         | char     | Primary category/fund code (PK)              |
+| CAT_COMP_2         | char     | Secondary category code                      |
+| GIFT_CAT_DESC      | varchar  | Fund/designation description                 |
+| FUND_TYPE          | char     | Fund type code                               |
+| FUND_GOAL_AMT      | numeric  | Fund goal amount                             |
+| ANNUAL_GOAL_AMT    | numeric  | Annual goal amount                           |
+| DESIGNATION_CDE    | char     | Designation code                             |
+| CHARITABLE_FLAG    | char     | Tax-deductible indicator                     |
+| GIFTS_NUM          | int      | Total number of gifts                        |
+| GIFTS_AMT          | numeric  | Total amount raised                          |
+| CASH_GIFT_NUM      | int      | Number of cash gifts                         |
+| CASH_GIFT_AMT      | numeric  | Total cash gifts                             |
++--------------------+----------+----------------------------------------------+
+
+FUND_TYPE VALUES:
+- R = Restricted
+- U = Unrestricted
+- E = Endowed
+- A = Annual Fund
+
+================================================================================
+                    8. RECOMMENDED MEASURES FOR POWER BI
+================================================================================
+
+BASIC MEASURES:
+---------------
+Total Gifts = SUM(GIFT_TRAN[GIFT_TRAN_AMT])
+
+Gift Count = COUNTROWS(GIFT_TRAN)
+
+Average Gift = DIVIDE([Total Gifts], [Gift Count], 0)
+
+Donor Count = DISTINCTCOUNT(GIFT_TRAN[DONOR_ID])
+
+
+TIME-BASED MEASURES:
+--------------------
+YTD Gifts =
+CALCULATE(
+    [Total Gifts],
+    DATESYTD(GIFT_TRAN[GIFT_DTE])
+)
+
+Prior Year Gifts =
+CALCULATE(
+    [Total Gifts],
+    SAMEPERIODLASTYEAR(GIFT_TRAN[GIFT_DTE])
+)
+
+YoY Growth =
+DIVIDE(
+    [Total Gifts] - [Prior Year Gifts],
+    [Prior Year Gifts],
+    0
+)
+
+
+DONOR METRICS:
+--------------
+New Donors =
+CALCULATE(
+    DISTINCTCOUNT(GIFT_TRAN[DONOR_ID]),
+    FILTER(
+        DONOR_MASTER,
+        YEAR(DONOR_MASTER[FIRST_GIFT_DTE]) = YEAR(TODAY())
+    )
+)
+
+Retained Donors =
+VAR CurrentYearDonors =
+    CALCULATETABLE(
+        VALUES(GIFT_TRAN[DONOR_ID]),
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY())
+    )
+VAR PriorYearDonors =
+    CALCULATETABLE(
+        VALUES(GIFT_TRAN[DONOR_ID]),
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()) - 1
+    )
+RETURN
+    COUNTROWS(INTERSECT(CurrentYearDonors, PriorYearDonors))
+
+
+CAMPAIGN METRICS:
+-----------------
+Campaign Goal Achievement =
+DIVIDE(
+    SUM(CAMPAIGN[CAMPAN_AMT_ACTUAL]),
+    SUM(CAMPAIGN[CAMPAN_AMT_GOAL]),
+    0
+)
+
+
+================================================================================
+                              NOTES & TIPS
+================================================================================
+
+1. DATE TABLE: Create a Date dimension table in Power BI for time intelligence:
+   - Calendar Year, Fiscal Year, Month, Quarter, Week
+   - Connect to GIFT_TRAN[GIFT_DTE]
+
+2. FILTERING: When analyzing, exclude voided transactions:
+   - Filter: GIFT_TRAN[GIFT_TRAN_STS] <> "V"
+
+3. SOFT CREDITS: Decide whether to include soft credits in totals:
+   - Filter: GIFT_TRAN[SOFT_CREDIT_YN] = "N" for hard credits only
+
+4. ANONYMOUS DONORS: Handle anonymous donors appropriately:
+   - Check DONOR_MASTER[ANON_DONOR_FLAG] = "Y"
+
+5. REFRESH SCHEDULE: Set up scheduled refresh in Power BI Service
+
+================================================================================
+                           END OF DATA DICTIONARY
+================================================================================

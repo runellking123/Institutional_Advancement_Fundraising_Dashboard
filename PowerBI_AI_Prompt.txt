@@ -1,0 +1,124 @@
+================================================================================
+         POWER BI "PREPARE DATA FOR AI" PROMPT - COPY AND PASTE BELOW
+================================================================================
+
+I am building an Institutional Advancement (Fundraising) Dashboard for a university. Please organize my data model with the following structure:
+
+## DATA MODEL STRUCTURE
+
+### FACT TABLE (Transaction Data):
+- **GIFT_TRAN** is the primary fact table containing all gift transactions
+  - Key metric field: GIFT_TRAN_AMT (gift amount)
+  - Date field: GIFT_DTE (gift date) - use this for all time-based analysis
+  - Filter out records where GIFT_TRAN_STS = 'V' (voided transactions)
+
+### DIMENSION TABLES:
+1. **DONOR_MASTER** - Donor profiles and lifetime giving statistics
+2. **NAME_MASTER** - Donor names (first name, last name, middle name)
+3. **CAMPAIGN** - Campaign definitions, goals, and performance
+4. **GIFT_CATEGORY** - Fund/designation definitions and descriptions
+5. **SOLICIT_DEF** - Solicitation type lookup table
+
+### RELATIONSHIPS TO CREATE:
+1. GIFT_TRAN[DONOR_ID] → DONOR_MASTER[ID_NUM] (Many-to-One)
+2. DONOR_MASTER[ID_NUM] → NAME_MASTER[ID_NUM] (One-to-One)
+3. GIFT_TRAN[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE] (Many-to-One)
+4. GIFT_TRAN[CAT_COMP_1] → GIFT_CATEGORY[CAT_COMP_1] (Many-to-One)
+5. GIFT_TRAN[SOLICIT_CDE] → SOLICIT_DEF[SOLICIT_CDE] (Many-to-One)
+
+### SUPPORTING TABLES (Pre-aggregated summaries):
+- **DONOR_YEAR_SUM** - Donor giving by year (relates to DONOR_MASTER via ID_NUM)
+- **DONOR_CAMP_SUM** - Donor giving by campaign (relates to DONOR_MASTER via ID_NUM)
+- **ALUMNI_MASTER** - Alumni records (relates to DONOR_MASTER via ID_NUM)
+
+## DATE TABLE
+Create a Date dimension table connected to GIFT_TRAN[GIFT_DTE] with:
+- Calendar Year, Fiscal Year (starting July 1)
+- Quarter, Month, Month Name
+- Week, Day of Week
+- Year-to-Date flags
+
+## KEY MEASURES TO CREATE
+
+### Giving Metrics:
+- Total Gifts = SUM of GIFT_TRAN_AMT
+- Gift Count = COUNT of transactions
+- Average Gift Size = Total Gifts / Gift Count
+- Median Gift = MEDIAN of GIFT_TRAN_AMT
+
+### Donor Metrics:
+- Total Donors = DISTINCTCOUNT of DONOR_ID
+- New Donors = Donors whose first gift is in current period
+- Retained Donors = Donors who gave in both current and prior year
+- Lapsed Donors = Donors who gave last year but not this year
+- Donor Retention Rate = Retained Donors / Prior Year Donors
+
+### Time Intelligence:
+- YTD Gifts (Year-to-Date)
+- Prior Year Gifts (Same Period Last Year)
+- Year-over-Year Growth %
+- Monthly Trend
+- Fiscal Year Totals
+
+### Campaign Metrics:
+- Campaign Goal = SUM of CAMPAN_AMT_GOAL
+- Campaign Actual = SUM of CAMPAN_AMT_ACTUAL
+- Goal Achievement % = Actual / Goal
+- Gifts by Campaign
+
+### Fund/Designation Metrics:
+- Giving by Fund Category
+- Restricted vs Unrestricted (FUND_TYPE field)
+- Annual Fund vs Endowment
+
+## IMPORTANT FIELD MAPPINGS
+
+### GIFT_TRAN Key Fields:
+- GIFT_TRAN_AMT = Gift amount (currency)
+- GIFT_DTE = Gift date
+- DONOR_ID = Links to donor
+- CAMPAIGN_CDE = Links to campaign
+- CAT_COMP_1 = Links to fund/designation
+- GIFT_CLASS: C=Cash, P=Pledge, M=Match, S=Soft Credit, N=Non-Cash
+- SOFT_CREDIT_YN: Y=Soft Credit, N=Hard Credit
+
+### DONOR_MASTER Key Fields:
+- ID_NUM = Unique donor ID
+- GIFTS_AMT = Lifetime giving total
+- GIFTS_NUM = Lifetime gift count
+- FIRST_GIFT_DTE = First gift date
+- LAST_GIFT_DTE = Most recent gift date
+- YRS_CONT_GIVING = Consecutive years of giving
+
+### CAMPAIGN Key Fields:
+- CAMPAIGN_CDE = Campaign code
+- CAMPAIGN_DESC = Campaign name
+- CAMPAN_AMT_GOAL = Fundraising goal
+- CAMPAN_AMT_ACTUAL = Amount raised
+
+### GIFT_CATEGORY Key Fields:
+- CAT_COMP_1 = Fund code
+- GIFT_CAT_DESC = Fund name/description
+- FUND_TYPE = R(Restricted), U(Unrestricted), E(Endowed), A(Annual)
+- FUND_GOAL_AMT = Fund goal
+
+## DASHBOARD GOALS
+This dashboard should enable:
+1. Executive summary of total giving and donor counts
+2. Year-over-year comparison of fundraising performance
+3. Campaign progress tracking against goals
+4. Donor retention and acquisition analysis
+5. Giving trends by month, quarter, and fiscal year
+6. Breakdown by fund designation (restricted vs unrestricted)
+7. Top donor and major gift analysis
+8. Alumni giving participation rates
+
+## DATA QUALITY NOTES
+- Exclude voided transactions (GIFT_TRAN_STS = 'V')
+- Handle soft credits appropriately (SOFT_CREDIT_YN = 'Y')
+- Anonymous donors have ANON_DONOR_FLAG = 'Y' in DONOR_MASTER
+- Data covers years 2020-2025
+
+================================================================================
+                              END OF PROMPT
+================================================================================
