@@ -1,7 +1,7 @@
 // ============================================================================
 // Tabular Editor 2 - Setup Relationships and Date Table Script
 // Institutional Advancement Fundraising Dashboard
-// VERSION 2 - Fixed Ambiguous Path Issues
+// VERSION 3 - Fixed Ambiguous Paths + Duplicate Key Issues
 // ============================================================================
 // Instructions:
 // 1. Open your Power BI model in Tabular Editor 2
@@ -18,7 +18,61 @@ List<string> successLog = new List<string>();
 List<string> errorLog = new List<string>();
 
 // ============================================================================
-// STEP 1: CREATE DATE TABLE (DimDate)
+// STEP 1: CREATE COMPOSITE KEY COLUMNS FOR GIFT_CATEGORY RELATIONSHIP
+// (CAT_COMP_1 has duplicates like 'ADMIN', so we need CAT_COMP_1 + CAT_COMP_2)
+// ============================================================================
+
+try
+{
+    // Create composite key in GIFT_CATEGORY
+    if (Model.Tables.Contains("GIFT_CATEGORY"))
+    {
+        var giftCategory = Model.Tables["GIFT_CATEGORY"];
+        if (!giftCategory.Columns.Contains("Category_Key"))
+        {
+            var keyCol = giftCategory.AddCalculatedColumn(
+                "Category_Key",
+                @"[CAT_COMP_1] & ""|"" & [CAT_COMP_2]"
+            );
+            keyCol.DataType = DataType.String;
+            keyCol.IsHidden = true;
+            successLog.Add("Created Category_Key column in GIFT_CATEGORY");
+            itemsCreated++;
+        }
+        else
+        {
+            successLog.Add("Category_Key already exists in GIFT_CATEGORY");
+        }
+    }
+
+    // Create matching composite key in GIFT_TRAN
+    if (Model.Tables.Contains("GIFT_TRAN"))
+    {
+        var giftTran = Model.Tables["GIFT_TRAN"];
+        if (!giftTran.Columns.Contains("Category_Key"))
+        {
+            var keyCol = giftTran.AddCalculatedColumn(
+                "Category_Key",
+                @"[CAT_COMP_1] & ""|"" & [CAT_COMP_2]"
+            );
+            keyCol.DataType = DataType.String;
+            keyCol.IsHidden = true;
+            successLog.Add("Created Category_Key column in GIFT_TRAN");
+            itemsCreated++;
+        }
+        else
+        {
+            successLog.Add("Category_Key already exists in GIFT_TRAN");
+        }
+    }
+}
+catch (Exception ex)
+{
+    errorLog.Add("Error creating composite key columns: " + ex.Message);
+}
+
+// ============================================================================
+// STEP 2: CREATE DATE TABLE (DimDate)
 // ============================================================================
 
 try
@@ -114,7 +168,7 @@ catch (Exception ex)
 }
 
 // ============================================================================
-// STEP 2: CREATE RELATIONSHIPS
+// STEP 3: CREATE RELATIONSHIPS
 // ============================================================================
 
 // Helper function to create relationships safely
@@ -219,12 +273,13 @@ CreateRelationship(
     "GIFT_TRAN[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]"
 );
 
-// 4. GIFT_TRAN → GIFT_CATEGORY (Fund/Designation dimension - ACTIVE)
+// 4. GIFT_TRAN → GIFT_CATEGORY using composite key (ACTIVE)
+// This fixes the duplicate 'ADMIN' issue
 CreateRelationship(
-    "GIFT_TRAN", "CAT_COMP_1",
-    "GIFT_CATEGORY", "CAT_COMP_1",
+    "GIFT_TRAN", "Category_Key",
+    "GIFT_CATEGORY", "Category_Key",
     "Single", true,
-    "GIFT_TRAN[CAT_COMP_1] → GIFT_CATEGORY[CAT_COMP_1]"
+    "GIFT_TRAN[Category_Key] → GIFT_CATEGORY[Category_Key]"
 );
 
 // 5. GIFT_TRAN → SOLICIT_DEF (Solicitation type lookup - ACTIVE)
@@ -281,7 +336,7 @@ CreateRelationship(
 );
 
 // ============================================================================
-// STEP 3: MARK DATE TABLE
+// STEP 4: MARK DATE TABLE
 // ============================================================================
 
 try
@@ -305,7 +360,7 @@ catch (Exception ex)
 }
 
 // ============================================================================
-// STEP 4: CREATE FULL NAME CALCULATED COLUMN IN NAME_MASTER
+// STEP 5: CREATE FULL NAME CALCULATED COLUMN IN NAME_MASTER
 // ============================================================================
 
 try
@@ -336,7 +391,7 @@ catch (Exception ex)
 }
 
 // ============================================================================
-// STEP 5: SORT COLUMNS (if DimDate exists)
+// STEP 6: SORT COLUMNS (if DimDate exists)
 // ============================================================================
 
 try
@@ -384,7 +439,7 @@ catch (Exception ex)
 // ============================================================================
 
 string resultMessage = "═══════════════════════════════════════════════════════════════\n";
-resultMessage += "   RELATIONSHIP & DATE TABLE SETUP COMPLETE (v2)\n";
+resultMessage += "   RELATIONSHIP & DATE TABLE SETUP COMPLETE (v3)\n";
 resultMessage += "═══════════════════════════════════════════════════════════════\n\n";
 resultMessage += "Items Created/Configured: " + itemsCreated + "\n\n";
 
@@ -414,7 +469,7 @@ resultMessage += "────────────────────�
 resultMessage += "1. GIFT_TRAN[DONOR_ID] → DONOR_MASTER[ID_NUM] (Both)\n";
 resultMessage += "2. DONOR_MASTER[ID_NUM] → NAME_MASTER[ID_NUM] (Both)\n";
 resultMessage += "3. GIFT_TRAN[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]\n";
-resultMessage += "4. GIFT_TRAN[CAT_COMP_1] → GIFT_CATEGORY[CAT_COMP_1]\n";
+resultMessage += "4. GIFT_TRAN[Category_Key] → GIFT_CATEGORY[Category_Key]\n";
 resultMessage += "5. GIFT_TRAN[SOLICIT_CDE] → SOLICIT_DEF[SOLICIT_CDE]\n";
 resultMessage += "6. DimDate[Date] → GIFT_TRAN[GIFT_DTE]\n";
 resultMessage += "\n";
@@ -425,6 +480,8 @@ resultMessage += "8. DONOR_CAMP_SUM[ID_NUM] → DONOR_MASTER[ID_NUM]\n";
 resultMessage += "9. DONOR_CAMP_SUM[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]\n";
 resultMessage += "10. ALUMNI_MASTER[ID_NUM] → DONOR_MASTER[ID_NUM]\n";
 resultMessage += "═══════════════════════════════════════════════════════════════\n";
+resultMessage += "\nNOTE: Category_Key combines CAT_COMP_1 + CAT_COMP_2 to handle\n";
+resultMessage += "      duplicate values like 'ADMIN' in GIFT_CATEGORY.\n";
 resultMessage += "\nRemember to SAVE your model! (File > Save or Ctrl+S)\n";
 
 Info(resultMessage);

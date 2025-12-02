@@ -1,6 +1,7 @@
 // ============================================================================
 // Tabular Editor 2 - Bulk Create Measures Script
 // Institutional Advancement Fundraising Dashboard
+// VERSION 2 - Fixed DAX Syntax Issues
 // ============================================================================
 // Instructions:
 // 1. Open your Power BI model in Tabular Editor 2
@@ -136,71 +137,61 @@ CreateMeasure("GIFT_TRAN", "Gifts Per Donor",
 "#,##0.00", "02. Donor Metrics");
 
 CreateMeasure("GIFT_TRAN", "New Donors (Current Year)",
-@"VAR CurrentYear = YEAR(TODAY())
-RETURN
-CALCULATE(
+@"CALCULATE(
     DISTINCTCOUNT(GIFT_TRAN[DONOR_ID]),
     GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
     FILTER(
         ALL(DONOR_MASTER),
-        YEAR(DONOR_MASTER[FIRST_GIFT_DTE]) = CurrentYear
+        YEAR(DONOR_MASTER[FIRST_GIFT_DTE]) = YEAR(TODAY())
     )
 )",
 "#,##0", "02. Donor Metrics");
 
 CreateMeasure("GIFT_TRAN", "Current Year Donors",
-@"VAR CurrentYear = YEAR(TODAY())
-RETURN
-CALCULATE(
+@"CALCULATE(
     DISTINCTCOUNT(GIFT_TRAN[DONOR_ID]),
     GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-    YEAR(GIFT_TRAN[GIFT_DTE]) = CurrentYear
+    YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY())
 )",
 "#,##0", "02. Donor Metrics");
 
 CreateMeasure("GIFT_TRAN", "Prior Year Donors",
-@"VAR PriorYear = YEAR(TODAY()) - 1
-RETURN
-CALCULATE(
+@"CALCULATE(
     DISTINCTCOUNT(GIFT_TRAN[DONOR_ID]),
     GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-    YEAR(GIFT_TRAN[GIFT_DTE]) = PriorYear
+    YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()) - 1
 )",
 "#,##0", "02. Donor Metrics");
 
 CreateMeasure("GIFT_TRAN", "Retained Donors",
-@"VAR CurrentYear = YEAR(TODAY())
-VAR PriorYear = CurrentYear - 1
-VAR CurrentYearDonors =
+@"VAR CurrentYearDonors =
     CALCULATETABLE(
         VALUES(GIFT_TRAN[DONOR_ID]),
         GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-        YEAR(GIFT_TRAN[GIFT_DTE]) = CurrentYear
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY())
     )
 VAR PriorYearDonors =
     CALCULATETABLE(
         VALUES(GIFT_TRAN[DONOR_ID]),
         GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-        YEAR(GIFT_TRAN[GIFT_DTE]) = PriorYear
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()) - 1
     )
 RETURN
     COUNTROWS(INTERSECT(CurrentYearDonors, PriorYearDonors))",
 "#,##0", "02. Donor Metrics");
 
 CreateMeasure("GIFT_TRAN", "Lapsed Donors",
-@"VAR CurrentYear = YEAR(TODAY())
-VAR PriorYear = CurrentYear - 1
-VAR CurrentYearDonors =
+@"VAR CurrentYearDonors =
     CALCULATETABLE(
         VALUES(GIFT_TRAN[DONOR_ID]),
         GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-        YEAR(GIFT_TRAN[GIFT_DTE]) = CurrentYear
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY())
     )
 VAR PriorYearDonors =
     CALCULATETABLE(
         VALUES(GIFT_TRAN[DONOR_ID]),
         GIFT_TRAN[GIFT_TRAN_STS] <> ""V"",
-        YEAR(GIFT_TRAN[GIFT_DTE]) = PriorYear
+        YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()) - 1
     )
 RETURN
     COUNTROWS(EXCEPT(PriorYearDonors, CurrentYearDonors))",
@@ -223,38 +214,35 @@ CreateMeasure("GIFT_TRAN", "Donor Acquisition Rate",
 "0.0%", "02. Donor Metrics");
 
 // ============================================================================
-// TIME INTELLIGENCE MEASURES
+// TIME INTELLIGENCE MEASURES (Fixed Syntax)
 // ============================================================================
 
 CreateMeasure("GIFT_TRAN", "YTD Gifts",
-@"VAR CurrentDate = TODAY()
-VAR StartOfYear = DATE(YEAR(CurrentDate), 1, 1)
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= StartOfYear,
-    GIFT_TRAN[GIFT_DTE] <= CurrentDate
+    FILTER(
+        ALL(GIFT_TRAN[GIFT_DTE]),
+        GIFT_TRAN[GIFT_DTE] >= DATE(YEAR(TODAY()), 1, 1) &&
+        GIFT_TRAN[GIFT_DTE] <= TODAY()
+    )
 )",
 "$#,##0.00", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Prior Year Total Gifts",
-@"VAR PriorYear = YEAR(TODAY()) - 1
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    YEAR(GIFT_TRAN[GIFT_DTE]) = PriorYear
+    YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()) - 1
 )",
 "$#,##0.00", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Prior YTD Gifts",
-@"VAR CurrentDate = TODAY()
-VAR PriorYearSameDate = DATE(YEAR(CurrentDate) - 1, MONTH(CurrentDate), DAY(CurrentDate))
-VAR PriorYearStart = DATE(YEAR(CurrentDate) - 1, 1, 1)
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= PriorYearStart,
-    GIFT_TRAN[GIFT_DTE] <= PriorYearSameDate
+    FILTER(
+        ALL(GIFT_TRAN[GIFT_DTE]),
+        GIFT_TRAN[GIFT_DTE] >= DATE(YEAR(TODAY()) - 1, 1, 1) &&
+        GIFT_TRAN[GIFT_DTE] <= DATE(YEAR(TODAY()) - 1, MONTH(TODAY()), DAY(TODAY()))
+    )
 )",
 "$#,##0.00", "03. Time Intelligence");
 
@@ -271,25 +259,24 @@ CreateMeasure("GIFT_TRAN", "YoY Growth %",
 "0.0%", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Current Month Gifts",
-@"VAR CurrentDate = TODAY()
-VAR StartOfMonth = DATE(YEAR(CurrentDate), MONTH(CurrentDate), 1)
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= StartOfMonth,
-    GIFT_TRAN[GIFT_DTE] <= CurrentDate
+    FILTER(
+        ALL(GIFT_TRAN[GIFT_DTE]),
+        GIFT_TRAN[GIFT_DTE] >= DATE(YEAR(TODAY()), MONTH(TODAY()), 1) &&
+        GIFT_TRAN[GIFT_DTE] <= TODAY()
+    )
 )",
 "$#,##0.00", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Prior Month Gifts",
-@"VAR CurrentDate = TODAY()
-VAR StartOfPriorMonth = EOMONTH(CurrentDate, -2) + 1
-VAR EndOfPriorMonth = EOMONTH(CurrentDate, -1)
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= StartOfPriorMonth,
-    GIFT_TRAN[GIFT_DTE] <= EndOfPriorMonth
+    FILTER(
+        ALL(GIFT_TRAN[GIFT_DTE]),
+        GIFT_TRAN[GIFT_DTE] >= EOMONTH(TODAY(), -2) + 1 &&
+        GIFT_TRAN[GIFT_DTE] <= EOMONTH(TODAY(), -1)
+    )
 )",
 "$#,##0.00", "03. Time Intelligence");
 
@@ -302,53 +289,33 @@ CreateMeasure("GIFT_TRAN", "MoM Growth %",
 "0.0%", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Fiscal YTD Gifts",
-@"VAR CurrentDate = TODAY()
-VAR CurrentFiscalYearStart =
-    IF(
-        MONTH(CurrentDate) >= 7,
-        DATE(YEAR(CurrentDate), 7, 1),
-        DATE(YEAR(CurrentDate) - 1, 7, 1)
-    )
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= CurrentFiscalYearStart,
-    GIFT_TRAN[GIFT_DTE] <= CurrentDate
+    FILTER(
+        ALL(GIFT_TRAN[GIFT_DTE]),
+        GIFT_TRAN[GIFT_DTE] >=
+            IF(
+                MONTH(TODAY()) >= 7,
+                DATE(YEAR(TODAY()), 7, 1),
+                DATE(YEAR(TODAY()) - 1, 7, 1)
+            ) &&
+        GIFT_TRAN[GIFT_DTE] <= TODAY()
+    )
 )",
 "$#,##0.00", "03. Time Intelligence");
 
-CreateMeasure("GIFT_TRAN", "Prior Fiscal Year Gifts",
-@"VAR CurrentDate = TODAY()
-VAR PriorFiscalYearStart =
-    IF(
-        MONTH(CurrentDate) >= 7,
-        DATE(YEAR(CurrentDate) - 1, 7, 1),
-        DATE(YEAR(CurrentDate) - 2, 7, 1)
-    )
-VAR PriorFiscalYearEnd =
-    IF(
-        MONTH(CurrentDate) >= 7,
-        DATE(YEAR(CurrentDate), 6, 30),
-        DATE(YEAR(CurrentDate) - 1, 6, 30)
-    )
-RETURN
-CALCULATE(
+CreateMeasure("GIFT_TRAN", "Current Year Gifts",
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= PriorFiscalYearStart,
-    GIFT_TRAN[GIFT_DTE] <= PriorFiscalYearEnd
+    YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY())
 )",
 "$#,##0.00", "03. Time Intelligence");
 
 CreateMeasure("GIFT_TRAN", "Current Quarter Gifts",
-@"VAR CurrentDate = TODAY()
-VAR CurrentQuarter = QUARTER(CurrentDate)
-VAR CurrentYear = YEAR(CurrentDate)
-VAR QuarterStart = DATE(CurrentYear, (CurrentQuarter - 1) * 3 + 1, 1)
-RETURN
-CALCULATE(
+@"CALCULATE(
     [Total Gifts (Excluding Voided)],
-    GIFT_TRAN[GIFT_DTE] >= QuarterStart,
-    GIFT_TRAN[GIFT_DTE] <= CurrentDate
+    YEAR(GIFT_TRAN[GIFT_DTE]) = YEAR(TODAY()),
+    QUARTER(GIFT_TRAN[GIFT_DTE]) = QUARTER(TODAY())
 )",
 "$#,##0.00", "03. Time Intelligence");
 
@@ -724,7 +691,7 @@ CreateMeasure("CAMPAIGN", "KPI - Campaign Progress",
 // DISPLAY COMPLETION MESSAGE
 // ============================================================================
 
-string resultMessage = "===== MEASURE CREATION COMPLETE =====\n\n";
+string resultMessage = "===== MEASURE CREATION COMPLETE (v2) =====\n\n";
 resultMessage += "Total Measures Created/Updated: " + measureCount + "\n\n";
 
 if (createdMeasures.Count > 0)
