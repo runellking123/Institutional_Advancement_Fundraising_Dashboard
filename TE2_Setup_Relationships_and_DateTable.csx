@@ -1,6 +1,7 @@
 // ============================================================================
 // Tabular Editor 2 - Setup Relationships and Date Table Script
 // Institutional Advancement Fundraising Dashboard
+// VERSION 2 - Fixed Ambiguous Path Issues
 // ============================================================================
 // Instructions:
 // 1. Open your Power BI model in Tabular Editor 2
@@ -117,8 +118,8 @@ catch (Exception ex)
 // ============================================================================
 
 // Helper function to create relationships safely
-Action<string, string, string, string, string, string> CreateRelationship =
-    (fromTable, fromColumn, toTable, toColumn, crossFilter, description) =>
+Action<string, string, string, string, string, bool, string> CreateRelationship =
+    (fromTable, fromColumn, toTable, toColumn, crossFilter, isActive, description) =>
 {
     try
     {
@@ -177,9 +178,11 @@ Action<string, string, string, string, string, string> CreateRelationship =
             relationship.CrossFilteringBehavior = CrossFilteringBehavior.OneDirection;
         }
 
-        relationship.IsActive = true;
+        // Set active status
+        relationship.IsActive = isActive;
 
-        successLog.Add("Created relationship: " + description);
+        string activeStatus = isActive ? "ACTIVE" : "INACTIVE";
+        successLog.Add("Created relationship (" + activeStatus + "): " + description);
         itemsCreated++;
     }
     catch (Exception ex)
@@ -189,91 +192,92 @@ Action<string, string, string, string, string, string> CreateRelationship =
 };
 
 // ============================================================================
-// PRIMARY RELATIONSHIPS
+// PRIMARY RELATIONSHIPS (ACTIVE) - These form the main star schema
 // ============================================================================
 
-// 1. GIFT_TRAN → DONOR_MASTER (Core relationship)
+// 1. GIFT_TRAN → DONOR_MASTER (Core relationship - ACTIVE)
 CreateRelationship(
     "GIFT_TRAN", "DONOR_ID",
     "DONOR_MASTER", "ID_NUM",
-    "Both",
+    "Both", true,
     "GIFT_TRAN[DONOR_ID] → DONOR_MASTER[ID_NUM]"
 );
 
-// 2. DONOR_MASTER → NAME_MASTER (Donor names)
+// 2. DONOR_MASTER → NAME_MASTER (Donor names - ACTIVE)
 CreateRelationship(
     "DONOR_MASTER", "ID_NUM",
     "NAME_MASTER", "ID_NUM",
-    "Both",
+    "Both", true,
     "DONOR_MASTER[ID_NUM] → NAME_MASTER[ID_NUM]"
 );
 
-// 3. GIFT_TRAN → CAMPAIGN (Campaign dimension)
+// 3. GIFT_TRAN → CAMPAIGN (Campaign dimension - ACTIVE)
 CreateRelationship(
     "GIFT_TRAN", "CAMPAIGN_CDE",
     "CAMPAIGN", "CAMPAIGN_CDE",
-    "Single",
+    "Single", true,
     "GIFT_TRAN[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]"
 );
 
-// 4. GIFT_TRAN → GIFT_CATEGORY (Fund/Designation dimension)
+// 4. GIFT_TRAN → GIFT_CATEGORY (Fund/Designation dimension - ACTIVE)
 CreateRelationship(
     "GIFT_TRAN", "CAT_COMP_1",
     "GIFT_CATEGORY", "CAT_COMP_1",
-    "Single",
+    "Single", true,
     "GIFT_TRAN[CAT_COMP_1] → GIFT_CATEGORY[CAT_COMP_1]"
 );
 
-// 5. GIFT_TRAN → SOLICIT_DEF (Solicitation type lookup)
+// 5. GIFT_TRAN → SOLICIT_DEF (Solicitation type lookup - ACTIVE)
 CreateRelationship(
     "GIFT_TRAN", "SOLICIT_CDE",
     "SOLICIT_DEF", "SOLICIT_CDE",
-    "Single",
+    "Single", true,
     "GIFT_TRAN[SOLICIT_CDE] → SOLICIT_DEF[SOLICIT_CDE]"
 );
 
-// 6. DimDate → GIFT_TRAN (Date dimension)
+// 6. DimDate → GIFT_TRAN (Date dimension - ACTIVE)
 CreateRelationship(
     "DimDate", "Date",
     "GIFT_TRAN", "GIFT_DTE",
-    "Single",
+    "Single", true,
     "DimDate[Date] → GIFT_TRAN[GIFT_DTE]"
 );
 
 // ============================================================================
-// SECONDARY RELATIONSHIPS (Summary Tables)
+// SECONDARY RELATIONSHIPS (INACTIVE) - Use with USERELATIONSHIP() in DAX
+// These are marked INACTIVE to avoid ambiguous paths
 // ============================================================================
 
-// 7. DONOR_YEAR_SUM → DONOR_MASTER
+// 7. DONOR_YEAR_SUM → DONOR_MASTER (INACTIVE - use USERELATIONSHIP when needed)
 CreateRelationship(
     "DONOR_YEAR_SUM", "ID_NUM",
     "DONOR_MASTER", "ID_NUM",
-    "Single",
-    "DONOR_YEAR_SUM[ID_NUM] → DONOR_MASTER[ID_NUM]"
+    "Single", false,
+    "DONOR_YEAR_SUM[ID_NUM] → DONOR_MASTER[ID_NUM] (INACTIVE)"
 );
 
-// 8. DONOR_CAMP_SUM → DONOR_MASTER
+// 8. DONOR_CAMP_SUM → DONOR_MASTER (INACTIVE - use USERELATIONSHIP when needed)
 CreateRelationship(
     "DONOR_CAMP_SUM", "ID_NUM",
     "DONOR_MASTER", "ID_NUM",
-    "Single",
-    "DONOR_CAMP_SUM[ID_NUM] → DONOR_MASTER[ID_NUM]"
+    "Single", false,
+    "DONOR_CAMP_SUM[ID_NUM] → DONOR_MASTER[ID_NUM] (INACTIVE)"
 );
 
-// 9. DONOR_CAMP_SUM → CAMPAIGN
+// 9. DONOR_CAMP_SUM → CAMPAIGN (INACTIVE - use USERELATIONSHIP when needed)
 CreateRelationship(
     "DONOR_CAMP_SUM", "CAMPAIGN_CDE",
     "CAMPAIGN", "CAMPAIGN_CDE",
-    "Single",
-    "DONOR_CAMP_SUM[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]"
+    "Single", false,
+    "DONOR_CAMP_SUM[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE] (INACTIVE)"
 );
 
-// 10. ALUMNI_MASTER → DONOR_MASTER (if Alumni data exists)
+// 10. ALUMNI_MASTER → DONOR_MASTER (INACTIVE - use USERELATIONSHIP when needed)
 CreateRelationship(
     "ALUMNI_MASTER", "ID_NUM",
     "DONOR_MASTER", "ID_NUM",
-    "Single",
-    "ALUMNI_MASTER[ID_NUM] → DONOR_MASTER[ID_NUM]"
+    "Single", false,
+    "ALUMNI_MASTER[ID_NUM] → DONOR_MASTER[ID_NUM] (INACTIVE)"
 );
 
 // ============================================================================
@@ -332,7 +336,7 @@ catch (Exception ex)
 }
 
 // ============================================================================
-// STEP 5: SORT MONTH COLUMN BY MONTH NUMBER (if DimDate exists)
+// STEP 5: SORT COLUMNS (if DimDate exists)
 // ============================================================================
 
 try
@@ -379,15 +383,15 @@ catch (Exception ex)
 // DISPLAY COMPLETION MESSAGE
 // ============================================================================
 
-string resultMessage = "═══════════════════════════════════════════════════════\n";
-resultMessage += "   RELATIONSHIP & DATE TABLE SETUP COMPLETE\n";
-resultMessage += "═══════════════════════════════════════════════════════\n\n";
+string resultMessage = "═══════════════════════════════════════════════════════════════\n";
+resultMessage += "   RELATIONSHIP & DATE TABLE SETUP COMPLETE (v2)\n";
+resultMessage += "═══════════════════════════════════════════════════════════════\n\n";
 resultMessage += "Items Created/Configured: " + itemsCreated + "\n\n";
 
 if (successLog.Count > 0)
 {
     resultMessage += "SUCCESS LOG:\n";
-    resultMessage += "───────────────────────────────────────────────────────\n";
+    resultMessage += "─────────────────────────────────────────────────────────────\n";
     foreach (var s in successLog)
     {
         resultMessage += "✓ " + s + "\n";
@@ -397,27 +401,30 @@ if (successLog.Count > 0)
 if (errorLog.Count > 0)
 {
     resultMessage += "\n\nERRORS:\n";
-    resultMessage += "───────────────────────────────────────────────────────\n";
+    resultMessage += "─────────────────────────────────────────────────────────────\n";
     foreach (var e in errorLog)
     {
         resultMessage += "✗ " + e + "\n";
     }
 }
 
-resultMessage += "\n═══════════════════════════════════════════════════════\n";
-resultMessage += "RELATIONSHIP SUMMARY:\n";
-resultMessage += "───────────────────────────────────────────────────────\n";
+resultMessage += "\n═══════════════════════════════════════════════════════════════\n";
+resultMessage += "ACTIVE RELATIONSHIPS (Main Star Schema):\n";
+resultMessage += "─────────────────────────────────────────────────────────────\n";
 resultMessage += "1. GIFT_TRAN[DONOR_ID] → DONOR_MASTER[ID_NUM] (Both)\n";
 resultMessage += "2. DONOR_MASTER[ID_NUM] → NAME_MASTER[ID_NUM] (Both)\n";
 resultMessage += "3. GIFT_TRAN[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]\n";
 resultMessage += "4. GIFT_TRAN[CAT_COMP_1] → GIFT_CATEGORY[CAT_COMP_1]\n";
 resultMessage += "5. GIFT_TRAN[SOLICIT_CDE] → SOLICIT_DEF[SOLICIT_CDE]\n";
 resultMessage += "6. DimDate[Date] → GIFT_TRAN[GIFT_DTE]\n";
+resultMessage += "\n";
+resultMessage += "INACTIVE RELATIONSHIPS (Use USERELATIONSHIP in DAX):\n";
+resultMessage += "─────────────────────────────────────────────────────────────\n";
 resultMessage += "7. DONOR_YEAR_SUM[ID_NUM] → DONOR_MASTER[ID_NUM]\n";
 resultMessage += "8. DONOR_CAMP_SUM[ID_NUM] → DONOR_MASTER[ID_NUM]\n";
 resultMessage += "9. DONOR_CAMP_SUM[CAMPAIGN_CDE] → CAMPAIGN[CAMPAIGN_CDE]\n";
 resultMessage += "10. ALUMNI_MASTER[ID_NUM] → DONOR_MASTER[ID_NUM]\n";
-resultMessage += "═══════════════════════════════════════════════════════\n";
+resultMessage += "═══════════════════════════════════════════════════════════════\n";
 resultMessage += "\nRemember to SAVE your model! (File > Save or Ctrl+S)\n";
 
 Info(resultMessage);
